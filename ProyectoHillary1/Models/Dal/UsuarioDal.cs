@@ -118,5 +118,16 @@ namespace ProyectoHillary1.Models.Dal
             }
             return result;
         }
+
+        // Método para obtener usuario por email (para login)
+        public async Task<Usuario?> GetByEmailForLogin(string email)
+        {
+            var usuario = await _context.usuario
+                .Include(u => u.Empresa)
+                .Include(u => u.Rol)
+                .FirstOrDefaultAsync(u => u.Email == email && u.Activo == true);
+
+            return usuario;
+        }
     }
 }

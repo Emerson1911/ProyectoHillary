@@ -1,37 +1,111 @@
 ﻿using Hillary.DTOs.UsuarioDTO;
-using Microsoft.AspNetCore.Http;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using ProyectoHillary1.Controllers;
 using ProyectoHillary1.Helpers;
 using ProyectoHillary1.Models.Dal;
 using ProyectoHillary1.Models.En;
+using ProyectoHillary1.Services;
 
 namespace ProyectoHillary1.Endpoints
 {
     [Route("api/[controller]")]
-    [ApiController]
-    public class UsuarioController : ControllerBase
+    [Authorize] // ✅ AGREGAR aquí
+    public class UsuarioController : BaseApiController
     {
         private readonly UsuarioDal _usuarioDal;
+        private readonly JwtService _jwtService;
 
-        public UsuarioController(UsuarioDal usuarioDal)
+        public UsuarioController(UsuarioDal usuarioDal, JwtService jwtService)
         {
             _usuarioDal = usuarioDal;
+            _jwtService = jwtService;
         }
 
-        // POST: api/Usuario
+        // POST: api/Usuario/login - NO requiere autenticación
+        [AllowAnonymous]
+        [HttpPost("login")]
+        public async Task<ActionResult<LoginResponseDTO>> Login([FromBody] LoginDTO loginDto)
+        {
+            try
+            {
+                if (string.IsNullOrWhiteSpace(loginDto.Email) || string.IsNullOrWhiteSpace(loginDto.Password))
+                {
+                    return BadRequest(new { message = "Email y contraseña son requeridos" });
+                }
+
+                var usuario = await _usuarioDal.GetByEmailForLogin(loginDto.Email);
+
+                if (usuario == null)
+                {
+                    return Unauthorized(new { message = "Credenciales inválidas" });
+                }
+
+                bool isPasswordValid = PasswordHelper.VerifyPassword(loginDto.Password, usuario.Password!);
+
+                if (!isPasswordValid)
+                {
+                    return Unauthorized(new { message = "Credenciales inválidas" });
+                }
+
+                string token = _jwtService.GenerateToken(usuario);
+                DateTime expiresAt = _jwtService.GetTokenExpiration();
+
+                var response = new LoginResponseDTO
+                {
+                    Token = token,
+                    UserId = usuario.Id,
+                    Nombre = usuario.Nombre ?? string.Empty,
+                    Email = usuario.Email ?? string.Empty,
+                    EmpresaId = usuario.EmpresaId,
+                    EmpresaNombre = usuario.Empresa?.Nombre ?? string.Empty,
+                    RolId = usuario.RolId,
+                    RolNombre = usuario.Rol?.Nombre ?? string.Empty,
+                    ExpiresAt = expiresAt
+                };
+
+                return Ok(response);
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, new { message = "Error interno del servidor", error = ex.Message });
+            }
+        }
+
+        // GET: api/Usuario/me - Obtener info del usuario autenticado
+        [HttpGet("me")]
+        public IActionResult GetCurrentUser()
+        {
+            return Ok(new
+            {
+                userId = GetUserId(),
+                userName = GetUserName(),
+                email = GetUserEmail(),
+                empresaId = GetEmpresaId(),
+                rolId = GetRolId(),
+                rolNombre = GetRolNombre(),
+                isAdmin = IsAdmin()
+            });
+        }
+
+        // POST: api/Usuario - Solo admin puede crear usuarios
         [HttpPost]
         public async Task<ActionResult> Create([FromBody] CreateUsuarioDTO createDto)
         {
             try
             {
+                // Solo admin puede crear usuarios
+                if (!IsAdmin())
+                {
+                    return Forbid();
+                }
+
                 var usuario = new Usuario
                 {
                     EmpresaId = createDto.EmpresaId,
                     RolId = createDto.RolId,
                     Nombre = createDto.Nombre,
-                    //Email = createDto.Email,
-                   Password = PasswordHelper.HashPassword(createDto.Password), // HASH AQUÍ
-                   // Activo = createDto.Activo ?? true
+                    Password = PasswordHelper.HashPassword(createDto.Password),
                 };
 
                 int result = await _usuarioDal.Create(usuario);
@@ -62,6 +136,19 @@ namespace ProyectoHillary1.Endpoints
                     return NotFound(new { message = "Usuario no encontrado" });
                 }
 
+                // Solo admin o el mismo usuario puede ver la información
+                if (!IsAdmin() && GetUserId() != id)
+                {
+                    return Forbid();
+                }
+
+                // Admin puede ver usuarios de cualquier empresa
+                // Usuarios normales solo pueden ver usuarios de su empresa
+                if (!IsAdmin() && !BelongsToUserCompany(usuario.EmpresaId))
+                {
+                    return Forbid();
+                }
+
                 var result = new GetlResultUsuarioDTO
                 {
                     Id = usuario.Id,
@@ -88,16 +175,33 @@ namespace ProyectoHillary1.Endpoints
         {
             try
             {
+                var usuarioExistente = await _usuarioDal.GetById(id);
+
+                if (usuarioExistente.Id == 0)
+                {
+                    return NotFound(new { message = "Usuario no encontrado" });
+                }
+
+                // Solo admin o el mismo usuario puede editar
+                if (!IsAdmin() && GetUserId() != id)
+                {
+                    return Forbid();
+                }
+
+                // Verificar que pertenece a la misma empresa (a menos que sea admin)
+                if (!IsAdmin() && !BelongsToUserCompany(usuarioExistente.EmpresaId))
+                {
+                    return Forbid();
+                }
+
                 var usuario = new Usuario
                 {
                     Id = id,
                     Nombre = editDto.Nombre,
                     Email = editDto.Email,
-                    // Solo hashear si se proporciona una nueva contraseña
                     Password = !string.IsNullOrWhiteSpace(editDto.Password)
                         ? PasswordHelper.HashPassword(editDto.Password)
                         : null,
-                    //Activo = editDto.Activo
                 };
 
                 int result = await _usuarioDal.Edit(usuario);
@@ -115,12 +219,17 @@ namespace ProyectoHillary1.Endpoints
             }
         }
 
-        // DELETE: api/Usuario/{id}
+        // DELETE: api/Usuario/{id} - Solo admin
         [HttpDelete("{id}")]
         public async Task<ActionResult> Delete(int id)
         {
             try
             {
+                if (!IsAdmin())
+                {
+                    return Forbid();
+                }
+
                 int result = await _usuarioDal.Delete(id);
 
                 if (result > 0)
@@ -147,6 +256,12 @@ namespace ProyectoHillary1.Endpoints
                     Nombre = searchDto.Nombre,
                     Email = searchDto.Email
                 };
+
+                // Si no es admin, solo puede buscar usuarios de su empresa
+                if (!IsAdmin())
+                {
+                    usuario.EmpresaId = GetEmpresaId();
+                }
 
                 int skip = (searchDto.PageNumber - 1) * searchDto.PageSize;
                 int countRow = await _usuarioDal.CountSearch(usuario);
@@ -176,12 +291,17 @@ namespace ProyectoHillary1.Endpoints
             }
         }
 
-        // PATCH: api/Usuario/{id}/change-status
+        // PATCH: api/Usuario/{id}/change-status - Solo admin
         [HttpPatch("{id}/change-status")]
         public async Task<ActionResult> ChangeStatus(int id, [FromBody] UserChangeStatusRequestDTO statusDto)
         {
             try
             {
+                if (!IsAdmin())
+                {
+                    return Forbid();
+                }
+
                 int result = await _usuarioDal.ChangeStatus(id, statusDto.Activo);
 
                 if (result > 0)
