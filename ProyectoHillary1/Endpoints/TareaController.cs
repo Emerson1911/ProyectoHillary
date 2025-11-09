@@ -1,6 +1,7 @@
 ﻿using Hillary.DTOs.TareaDTOS;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using ProyectoHillary1.Attributes;
 using ProyectoHillary1.Controllers;
 using ProyectoHillary1.Models.Dal;
 using ProyectoHillary1.Models.En;
@@ -8,7 +9,7 @@ using ProyectoHillary1.Models.En;
 namespace ProyectoHillary1.Endpoints
 {
     [Route("api/[controller]")]
-    [Authorize] // ✅ AGREGAR aquí
+    [Authorize]
     public class TareaController : BaseApiController
     {
         private readonly TareaDal _tareaDal;
@@ -19,6 +20,8 @@ namespace ProyectoHillary1.Endpoints
         }
 
         // POST: api/Tarea
+        // Roles permitidos: 1 (Gerente)
+        [AuthorizeRoles(1)]
         [HttpPost]
         public async Task<ActionResult<int>> Create([FromBody] CreateTareaDTO createDto)
         {
@@ -50,6 +53,7 @@ namespace ProyectoHillary1.Endpoints
         }
 
         // GET: api/Tarea/{id}
+        // Roles permitidos: 1 (Gerente), 2 (Administrador), 1002 (Vendedor) - TODOS pueden ver
         [HttpGet("{id}")]
         public async Task<ActionResult<GetIDResultTareaDTO>> GetById(int id)
         {
@@ -60,7 +64,6 @@ namespace ProyectoHillary1.Endpoints
                 if (tarea.Id == 0)
                     return NotFound(new { message = "Tarea no encontrada" });
 
-                // Verificar que la tarea pertenece a la empresa del usuario
                 if (!BelongsToUserCompany(tarea.EmpresaId))
                     return Forbid();
 
@@ -82,6 +85,8 @@ namespace ProyectoHillary1.Endpoints
         }
 
         // PUT: api/Tarea/{id}
+        // Roles permitidos: 1 (Gerente), 2 (Administrador), 1002 (Vendedor) - TODOS pueden editar
+        [AuthorizeRoles(1, 2, 1002)]
         [HttpPut("{id}")]
         public async Task<ActionResult> Edit(int id, [FromBody] EditTareaDTO editDto)
         {
@@ -117,15 +122,14 @@ namespace ProyectoHillary1.Endpoints
             }
         }
 
-        // DELETE: api/Tarea/{id} - Solo admin
+        // DELETE: api/Tarea/{id}
+        // Roles permitidos: 1 (Gerente), 1002 (Vendedor) - Administrador NO puede eliminar
+        [AuthorizeRoles(1, 1002)]
         [HttpDelete("{id}")]
         public async Task<ActionResult> Delete(int id)
         {
             try
             {
-                if (!IsAdmin())
-                    return Forbid();
-
                 var tarea = await _tareaDal.GetByIdWithEmpresa(id);
                 if (tarea.Id == 0)
                     return NotFound(new { message = "Tarea no encontrada" });
@@ -147,6 +151,7 @@ namespace ProyectoHillary1.Endpoints
         }
 
         // POST: api/Tarea/search
+        // Roles permitidos: 1 (Gerente), 2 (Administrador), 1002 (Vendedor) - TODOS pueden buscar
         [HttpPost("search")]
         public async Task<ActionResult<SearchResultTareaDTO>> Search([FromBody] SearchQueryTareaDTO searchQuery)
         {
@@ -191,6 +196,7 @@ namespace ProyectoHillary1.Endpoints
         }
 
         // GET: api/Tarea/mis-tareas
+        // Roles permitidos: 1 (Gerente), 2 (Administrador), 1002 (Vendedor) - TODOS pueden ver
         [HttpGet("mis-tareas")]
         public async Task<ActionResult<List<SearchResultTareaDTO.TareaDTO>>> GetMisTareas()
         {
@@ -219,7 +225,5 @@ namespace ProyectoHillary1.Endpoints
                 return StatusCode(500, new { message = "Error interno del servidor", error = ex.Message });
             }
         }
-
-        
     }
 }

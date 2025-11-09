@@ -19,7 +19,7 @@ namespace ProyectoHillary1.Endpoints
 
         // POST: api/Empresa
         [HttpPost]
-        public async Task<ActionResult<GetIDResultEmpresaDTO>> Create([FromBody] CreateEmpresaDTO createDto)
+        public async Task<ActionResult<GetIDResultEmpresaDTO>> CreateEmpresa([FromBody] CreateEmpresaDTO createDto)
         {
             try
             {

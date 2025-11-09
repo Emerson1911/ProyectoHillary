@@ -1,4 +1,4 @@
-using Microsoft.AspNetCore.Authentication.JwtBearer;
+﻿using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
@@ -9,18 +9,26 @@ using System.Text;
 
 var builder = WebApplication.CreateBuilder(args);
 
-// Controllers
-builder.Services.AddControllers();
-builder.Services.AddEndpointsApiExplorer();
+// ✅ Configurar controladores con opciones JSON
+builder.Services.AddControllers()
+    .AddJsonOptions(options =>
+    {
+        // Ignora mayúsculas/minúsculas en los nombres de propiedades
+        options.JsonSerializerOptions.PropertyNameCaseInsensitive = true;
 
-// Configurar Swagger con soporte para JWT
+        // Desactiva la conversión de nombres a camelCase
+        options.JsonSerializerOptions.PropertyNamingPolicy = null;
+    });
+
+// Swagger con autenticación JWT
+builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen(options =>
 {
     options.SwaggerDoc("v1", new OpenApiInfo
     {
         Title = "Proyecto Hillary API",
         Version = "v1",
-        Description = "API con autenticacion JWT"
+        Description = "API con autenticación JWT"
     });
 
     // Definir el esquema de seguridad JWT
@@ -51,11 +59,11 @@ builder.Services.AddSwaggerGen(options =>
     });
 });
 
-// Conexion a SQL Server
+// ✅ Configurar conexión a SQL Server
 builder.Services.AddDbContext<ProyectoHillaryContext>(options =>
     options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection")));
 
-// Registrar DALs y servicios
+// ✅ Registrar DALs y servicios
 builder.Services.AddScoped<RolDal>();
 builder.Services.AddScoped<EmpresaDal>();
 builder.Services.AddScoped<UsuarioDal>();
@@ -63,7 +71,7 @@ builder.Services.AddScoped<TareaDal>();
 builder.Services.AddScoped<EmailGenerator>();
 builder.Services.AddScoped<JwtService>();
 
-// Configurar CORS
+// ✅ Configurar CORS
 builder.Services.AddCors(options =>
 {
     options.AddPolicy("AllowAll", policy =>
@@ -74,7 +82,7 @@ builder.Services.AddCors(options =>
     });
 });
 
-// Autenticacion JWT
+// ✅ Configurar autenticación JWT
 builder.Services.AddAuthentication(options =>
 {
     options.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
@@ -101,7 +109,7 @@ builder.Services.AddAuthorization();
 
 var app = builder.Build();
 
-// Middleware
+// ✅ Middleware
 if (app.Environment.IsDevelopment())
 {
     app.UseSwagger();
