@@ -2,6 +2,7 @@
 using FoxRedConstruccion.Services;
 using Hillary.DTOs.EmpresaDTOS;
 using Microsoft.AspNetCore.Mvc;
+using System.Text.Json;
 
 namespace FoxRedConstruccion.Controllers
 {
@@ -54,10 +55,8 @@ namespace FoxRedConstruccion.Controllers
         }
 
         // GET: Empresa/Create
-        // GET: Empresa/Create
         public IActionResult Create()
         {
-            // ✅ IMPORTANTE: Pasar un modelo nuevo (no null) para que los Tag Helpers funcionen
             var model = new CreateEmpresaDTO();
             return View(model);
         }
@@ -69,10 +68,9 @@ namespace FoxRedConstruccion.Controllers
         {
             if (!ModelState.IsValid)
             {
-                // Si hay errores de validación, mostrarlos
                 foreach (var error in ModelState.Values.SelectMany(v => v.Errors))
                 {
-                    Console.WriteLine($"Error de validación: {error.ErrorMessage}");
+                    Console.WriteLine($"❌ Error de validación: {error.ErrorMessage}");
                 }
                 return View(empresa);
             }
@@ -92,7 +90,26 @@ namespace FoxRedConstruccion.Controllers
         // GET: Empresa/Edit/5
         public async Task<IActionResult> Edit(int id)
         {
+            Console.WriteLine($"🔍 Buscando empresa con ID: {id}");
+
             var empresa = await _empresaService.GetByIdAsync(id);
+
+            // ✅ DEBUG: Ver qué devuelve la API
+            if (empresa != null)
+            {
+                Console.WriteLine($"✅ Empresa encontrada:");
+                Console.WriteLine($"   - Nombre: {empresa.Nombre}");
+                Console.WriteLine($"   - RUC: {empresa.Ruc}");
+                Console.WriteLine($"   - Email: {empresa.Email}");
+                Console.WriteLine($"   - Teléfono: {empresa.Telefono}");
+                Console.WriteLine($"   - Dirección: {empresa.Direccion}");
+                Console.WriteLine($"   - Activo: {empresa.Activo}");
+                Console.WriteLine($"📦 Objeto completo: {JsonSerializer.Serialize(empresa)}");
+            }
+            else
+            {
+                Console.WriteLine($"❌ Empresa con ID {id} NO encontrada");
+            }
 
             if (empresa == null)
             {
@@ -100,6 +117,7 @@ namespace FoxRedConstruccion.Controllers
                 return RedirectToAction(nameof(Index));
             }
 
+            // ✅ Mapear a EditEmpresaDTO
             var editDto = new EditEmpresaDTO
             {
                 Nombre = empresa.Nombre,
@@ -109,6 +127,11 @@ namespace FoxRedConstruccion.Controllers
                 Email = empresa.Email,
                 Activo = empresa.Activo
             };
+
+            Console.WriteLine($"📝 DTO mapeado:");
+            Console.WriteLine($"   - Nombre: {editDto.Nombre}");
+            Console.WriteLine($"   - RUC: {editDto.Ruc}");
+            Console.WriteLine($"   - Email: {editDto.Email}");
 
             ViewBag.Id = id;
             return View(editDto);

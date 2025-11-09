@@ -1,8 +1,7 @@
-﻿using Microsoft.AspNetCore.Mvc;
-using Microsoft.EntityFrameworkCore;
+﻿using Hillary.DTOs.EmpresaDTOS;
+using Microsoft.AspNetCore.Mvc;
 using ProyectoHillary1.Models.Dal;
 using ProyectoHillary1.Models.En;
-using Hillary.DTOs.EmpresaDTOS;
 
 namespace ProyectoHillary1.Endpoints
 {

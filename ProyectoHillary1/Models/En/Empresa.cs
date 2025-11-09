@@ -1,5 +1,4 @@
 ﻿using System.ComponentModel.DataAnnotations.Schema;
-using System.Threading;
 
 namespace ProyectoHillary1.Models.En
 {

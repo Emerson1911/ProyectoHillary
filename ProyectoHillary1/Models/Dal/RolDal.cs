@@ -1,5 +1,5 @@
-﻿using ProyectoHillary1.Models.En;
-using Microsoft.EntityFrameworkCore;
+﻿using Microsoft.EntityFrameworkCore;
+using ProyectoHillary1.Models.En;
 
 namespace ProyectoHillary1.Models.Dal
 {

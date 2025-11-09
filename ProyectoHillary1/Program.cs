@@ -13,10 +13,7 @@ var builder = WebApplication.CreateBuilder(args);
 builder.Services.AddControllers()
     .AddJsonOptions(options =>
     {
-        // Ignora mayúsculas/minúsculas en los nombres de propiedades
         options.JsonSerializerOptions.PropertyNameCaseInsensitive = true;
-
-        // Desactiva la conversión de nombres a camelCase
         options.JsonSerializerOptions.PropertyNamingPolicy = null;
     });
 
@@ -31,7 +28,6 @@ builder.Services.AddSwaggerGen(options =>
         Description = "API con autenticación JWT"
     });
 
-    // Definir el esquema de seguridad JWT
     options.AddSecurityDefinition("Bearer", new OpenApiSecurityScheme
     {
         Name = "Authorization",
@@ -42,7 +38,6 @@ builder.Services.AddSwaggerGen(options =>
         Description = "Ingrese el token JWT en el formato: Bearer {token}"
     });
 
-    // Requerir el esquema de seguridad globalmente
     options.AddSecurityRequirement(new OpenApiSecurityRequirement
     {
         {
@@ -59,9 +54,12 @@ builder.Services.AddSwaggerGen(options =>
     });
 });
 
-// ✅ Configurar conexión a SQL Server
+// ✅ CRÍTICO: Configurar SQL Server
 builder.Services.AddDbContext<ProyectoHillaryContext>(options =>
-    options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection")));
+    options.UseSqlServer(
+        builder.Configuration.GetConnectionString("DefaultConnection"),
+        sqlOptions => sqlOptions.EnableRetryOnFailure()  // ← Agrega reintentos automáticos
+    ));
 
 // ✅ Registrar DALs y servicios
 builder.Services.AddScoped<RolDal>();
@@ -124,5 +122,8 @@ app.UseCors("AllowAll");
 app.UseAuthentication();
 app.UseAuthorization();
 app.MapControllers();
+
+Console.WriteLine("✅ API iniciada correctamente");
+Console.WriteLine($"📊 Swagger: https://localhost:5108/swagger");
 
 app.Run();

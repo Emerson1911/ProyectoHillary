@@ -51,14 +51,18 @@
                             </div>
                         </div>
 
-                        <!-- Confirm Delete -->
-                        <form asp-action="Delete" asp-route-id="@Model.Id" method="post" class="text-center">
+                        <!-- Confirm Delete Form -->
+                        <form method="post" asp-action="Delete" class="text-center">
+                            @Html.AntiForgeryToken()
+                            <input type="hidden" name="id" value="@Model.Id" />
+
                             <p class="fw-semibold text-danger mb-4">Esta acción no se puede deshacer.</p>
+
                             <div class="d-flex justify-content-center gap-3">
                                 <button type="submit" class="btn btn-danger btn-lg shadow-sm">
                                     <i class="bi bi-trash"></i> Confirmar Eliminación
                                 </button>
-                                <a asp-action="Index" class="btn btn-outline-secondary btn-lg shadow-sm">
+                                <a href="@Url.Action("Index", "Empresa")" class="btn btn-outline-secondary btn-lg shadow-sm">
                                     <i class="bi bi-x-circle"></i> Cancelar
                                 </a>
                             </div>
@@ -87,10 +91,6 @@
 
         .btn-lg {
             min-width: 200px;
-        }
-
-        .border-danger {
-            border-color: #dc3545 !important;
         }
     </style>
 }

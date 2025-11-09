@@ -1,8 +1,7 @@
-﻿using Microsoft.AspNetCore.Mvc;
+﻿using Hillary.DTOs.RolDTOS;
+using Microsoft.AspNetCore.Mvc;
 using ProyectoHillary1.Models.Dal;
 using ProyectoHillary1.Models.En;
-using Hillary.DTOs.RolDTOS;
-using Microsoft.EntityFrameworkCore;
 
 namespace ProyectoHillary1.Controllers
 {
