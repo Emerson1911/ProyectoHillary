@@ -10,7 +10,7 @@ using ProyectoHillary1.Services;
 namespace ProyectoHillary1.Endpoints
 {
     [Route("api/[controller]")]
-    [Authorize] // ✅ AGREGAR aquí
+    //[Authorize] // ✅ AGREGAR aquí
     public class UsuarioController : BaseApiController
     {
         private readonly UsuarioDal _usuarioDal;

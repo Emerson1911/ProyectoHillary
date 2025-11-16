@@ -1,0 +1,189 @@
+﻿@model Hillary.DTOs.UsuarioDTO.CreateUsuarioDTO
+
+@{
+    Layout = "~/Pages/Shared/_Layout.cshtml";
+    ViewData["Title"] = "Registrar Usuario";
+}
+
+<div class="min-vh-100 bg-light py-5">
+    <div class="container">
+        <div class="row justify-content-center">
+            <div class="col-lg-7 col-md-9">
+                <div class="card shadow-sm border-0">
+                    <div class="card-header bg-gradient bg-success text-white py-3 d-flex align-items-center">
+                        <i class="bi bi-person-plus-fill fs-4 me-2"></i>
+                        <h3 class="mb-0 fw-bold">Registrar Usuario</h3>
+                    </div>
+
+                    <div class="card-body p-4">
+                        @* Mensaje de bienvenida después de crear empresa *@
+                        @if (ViewBag.MostrarMensajeBienvenida == true)
+                        {
+                            <div class="alert alert-info alert-dismissible fade show shadow-sm" role="alert">
+                                <i class="bi bi-info-circle-fill me-2"></i>
+                                <strong>¡Empresa creada exitosamente!</strong><br />
+                                Ahora cree el usuario administrador para <strong>@ViewBag.EmpresaNombre</strong>
+                                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                            </div>
+                        }
+
+                        @* Mensajes de error/éxito *@
+                        @if (TempData["Error"] != null)
+                        {
+                            <div class="alert alert-danger alert-dismissible fade show shadow-sm" role="alert">
+                                <i class="bi bi-exclamation-circle-fill me-2"></i>
+                                <strong>Error:</strong> @TempData["Error"]
+                                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                            </div>
+                        }
+
+                        @if (TempData["Warning"] != null)
+                        {
+                            <div class="alert alert-warning alert-dismissible fade show shadow-sm" role="alert">
+                                <i class="bi bi-exclamation-triangle-fill me-2"></i>
+                                @TempData["Warning"]
+                                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                            </div>
+                        }
+
+                        <form asp-action="Register" method="post">
+                            @Html.AntiForgeryToken()
+
+                            @* Campo oculto para EmpresaId *@
+                            <input type="hidden" asp-for="EmpresaId" />
+                            <input type="hidden" asp-for="RolId" />
+
+                            <div class="row g-3">
+                                @* Mostrar nombre de empresa si está prellenado *@
+                                @if (Model?.EmpresaId > 0 && !string.IsNullOrEmpty(ViewBag.EmpresaNombre))
+                                {
+                                    <div class="col-md-12">
+                                        <div class="alert alert-light border">
+                                            <strong><i class="bi bi-building"></i> Empresa:</strong>
+                                            <span class="text-primary fw-bold">@ViewBag.EmpresaNombre</span>
+                                        </div>
+                                    </div>
+                                }
+
+                                @* Nombre de usuario *@
+                                <div class="col-md-12">
+                                    <label for="Nombre" class="form-label fw-semibold">
+                                        Nombre Completo <span class="text-danger">*</span>
+                                    </label>
+                                    <input type="text"
+                                           id="Nombre"
+                                           name="Nombre"
+                                           asp-for="Nombre"
+                                           class="form-control"
+                                           placeholder="Ingrese el nombre completo del usuario"
+                                           required
+                                           autofocus />
+                                    <span asp-validation-for="Nombre" class="text-danger small"></span>
+                                </div>
+
+                                @* Contraseña *@
+                                <div class="col-md-12">
+                                    <label for="Password" class="form-label fw-semibold">
+                                        Contraseña <span class="text-danger">*</span>
+                                    </label>
+                                    <div class="input-group">
+                                        <input type="password"
+                                               id="Password"
+                                               name="Password"
+                                               asp-for="Password"
+                                               class="form-control"
+                                               placeholder="Ingrese una contraseña segura"
+                                               required
+                                               minlength="6" />
+                                        <button class="btn btn-outline-secondary"
+                                                type="button"
+                                                id="togglePassword">
+                                            <i class="bi bi-eye" id="eyeIcon"></i>
+                                        </button>
+                                    </div>
+                                    <span asp-validation-for="Password" class="text-danger small"></span>
+                                    <small class="text-muted">Mínimo 6 caracteres</small>
+                                </div>
+
+                                @* Información importante *@
+                                <div class="col-md-12">
+                                    <div class="alert alert-warning border-warning">
+                                        <i class="bi bi-lightbulb-fill"></i>
+                                        <strong>Nota:</strong> El email se generará automáticamente por el sistema.
+                                        Podrá ver el email generado después de completar el registro.
+                                    </div>
+                                </div>
+                            </div>
+
+                            @* Botones *@
+                            <div class="d-flex justify-content-between align-items-center mt-4">
+                                <a asp-controller="Empresa"
+                                   asp-action="Index"
+                                   class="btn btn-outline-secondary">
+                                    <i class="bi bi-arrow-left"></i> Volver a Empresas
+                                </a>
+
+                                <button type="submit" class="btn btn-success btn-lg shadow-sm px-4">
+                                    <i class="bi bi-person-check-fill"></i> Registrar Usuario
+                                </button>
+                            </div>
+                        </form>
+                    </div>
+
+                    <div class="card-footer text-center bg-white border-top-0 text-muted small">
+                        <i class="bi bi-shield-check"></i> Los campos marcados con (*) son obligatorios
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    @await Html.PartialAsync("_ValidationScriptsPartial")
+
+    <script>
+        // Toggle para mostrar/ocultar contraseña
+        document.getElementById('togglePassword').addEventListener('click', function() {
+            const passwordInput = document.getElementById('Password');
+            const eyeIcon = document.getElementById('eyeIcon');
+
+            if (passwordInput.type === 'password') {
+                passwordInput.type = 'text';
+                eyeIcon.classList.remove('bi-eye');
+                eyeIcon.classList.add('bi-eye-slash');
+            } else {
+                passwordInput.type = 'password';
+                eyeIcon.classList.remove('bi-eye-slash');
+                eyeIcon.classList.add('bi-eye');
+            }
+        });
+    </script>
+
+    <style>
+        .card {
+            border-radius: 0.5rem;
+        }
+
+        .form-label {
+            font-weight: 600;
+        }
+
+        input::placeholder {
+            color: #aaa;
+            font-style: italic;
+        }
+
+        .input-group .btn {
+            border-left: none;
+        }
+
+        .input-group .form-control:focus + .btn {
+            border-color: #86b7fe;
+        }
+
+        .alert-light {
+            background-color: #f8f9fa;
+        }
+    </style>
+}

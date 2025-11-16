@@ -22,6 +22,7 @@ builder.Services.AddHttpClient("HillaryApi", client =>
 
 // Registrar los servicios personalizados
 builder.Services.AddScoped<EmpresaService>();
+builder.Services.AddScoped<UsuarioService>();
 
 // Agregar soporte para Razor Pages y MVC
 builder.Services.AddControllersWithViews();

@@ -62,6 +62,7 @@ namespace FoxRedConstruccion.Controllers
         }
 
         // POST: Empresa/Create
+        // POST: Empresa/Create
         [HttpPost]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> Create(CreateEmpresaDTO empresa)
@@ -79,8 +80,9 @@ namespace FoxRedConstruccion.Controllers
 
             if (result != null)
             {
-                TempData["Success"] = "Empresa creada exitosamente";
-                return RedirectToAction(nameof(Index));
+                TempData["Success"] = $"Empresa '{result.Nombre}' creada exitosamente";
+                // ✅ Redirigir al registro de usuario con el ID de la empresa
+                return RedirectToAction("Register", "Usuarios", new { empresaId = result.Id });
             }
 
             TempData["Error"] = "No se pudo crear la empresa";
