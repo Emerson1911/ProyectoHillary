@@ -123,6 +123,43 @@ namespace ProyectoHillary1.Endpoints
             }
         }
 
+        // POST: api/Usuario/register - Registro público de usuarios
+        [AllowAnonymous]
+        [HttpPost("register")]
+        public async Task<ActionResult> Register([FromBody] CreateUsuarioDTO createDto)
+        {
+            try
+            {
+                var usuario = new Usuario
+                {
+                    EmpresaId = createDto.EmpresaId,
+                    RolId = createDto.RolId > 0 ? createDto.RolId : 2,
+                    Nombre = createDto.Nombre,
+                    Password = PasswordHelper.HashPassword(createDto.Password!),
+                    Activo = true
+                };
+
+                int result = await _usuarioDal.Create(usuario);
+
+                if (result > 0)
+                {
+                    return Ok(new  // ✅ Objeto anónimo
+                    {
+                        message = "Usuario registrado exitosamente",
+                        id = usuario.Id,
+                        email = usuario.Email, // ✅ Email autogenerado
+                        nombre = usuario.Nombre
+                    });
+                }
+
+                return BadRequest(new { message = "No se pudo registrar el usuario" });
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, new { message = "Error interno del servidor", error = ex.Message });
+            }
+        }
+
         // GET: api/Usuario/{id}
         [HttpGet("{id}")]
         public async Task<ActionResult<GetlResultUsuarioDTO>> GetById(int id)
