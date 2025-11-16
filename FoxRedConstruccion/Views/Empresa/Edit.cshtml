@@ -32,10 +32,13 @@
 
                             <!-- Nombre -->
                             <div class="mb-3">
-                                <label asp-for="Nombre" class="form-label fw-semibold">
+                                <label for="Nombre" class="form-label fw-semibold">
                                     <i class="bi bi-building text-primary"></i> Nombre de la Empresa *
                                 </label>
-                                <input asp-for="Nombre"
+                                <input type="text"
+                                       id="Nombre"
+                                       name="Nombre"
+                                       value="@Model.Nombre"
                                        class="form-control form-control-lg"
                                        placeholder="Ingrese el nombre de la empresa"
                                        required />
@@ -44,10 +47,13 @@
 
                             <!-- RUC -->
                             <div class="mb-3">
-                                <label asp-for="Ruc" class="form-label fw-semibold">
+                                <label for="Ruc" class="form-label fw-semibold">
                                     <i class="bi bi-file-text text-secondary"></i> RUC
                                 </label>
-                                <input asp-for="Ruc"
+                                <input type="text"
+                                       id="Ruc"
+                                       name="Ruc"
+                                       value="@Model.Ruc"
                                        class="form-control"
                                        placeholder="Ej: 01234567890123"
                                        maxlength="20" />
@@ -56,23 +62,27 @@
 
                             <!-- Dirección -->
                             <div class="mb-3">
-                                <label asp-for="Direccion" class="form-label fw-semibold">
+                                <label for="Direccion" class="form-label fw-semibold">
                                     <i class="bi bi-geo-alt text-info"></i> Dirección
                                 </label>
-                                <textarea asp-for="Direccion"
+                                <textarea id="Direccion"
+                                          name="Direccion"
                                           class="form-control"
                                           rows="2"
-                                          placeholder="Ingrese la dirección completa"></textarea>
+                                          placeholder="Ingrese la dirección completa">@Model.Direccion</textarea>
                                 <span asp-validation-for="Direccion" class="text-danger small"></span>
                             </div>
 
                             <!-- Teléfono y Email en dos columnas -->
                             <div class="row">
                                 <div class="col-md-6 mb-3">
-                                    <label asp-for="Telefono" class="form-label fw-semibold">
+                                    <label for="Telefono" class="form-label fw-semibold">
                                         <i class="bi bi-telephone text-success"></i> Teléfono
                                     </label>
-                                    <input asp-for="Telefono"
+                                    <input type="text"
+                                           id="Telefono"
+                                           name="Telefono"
+                                           value="@Model.Telefono"
                                            class="form-control"
                                            placeholder="Ej: +503 1234-5678"
                                            maxlength="20" />
@@ -80,11 +90,13 @@
                                 </div>
 
                                 <div class="col-md-6 mb-3">
-                                    <label asp-for="Email" class="form-label fw-semibold">
+                                    <label for="Email" class="form-label fw-semibold">
                                         <i class="bi bi-envelope text-danger"></i> Email
                                     </label>
-                                    <input asp-for="Email"
-                                           type="email"
+                                    <input type="email"
+                                           id="Email"
+                                           name="Email"
+                                           value="@Model.Email"
                                            class="form-control"
                                            placeholder="ejemplo@empresa.com" />
                                     <span asp-validation-for="Email" class="text-danger small"></span>
@@ -96,12 +108,15 @@
                                 <div class="card bg-light">
                                     <div class="card-body">
                                         <div class="form-check form-switch">
-                                            <input asp-for="Activo"
+                                            <input type="checkbox"
+                                                   id="Activo"
+                                                   name="Activo"
+                                                   value="true"
+                                                   @(Model.Activo == true ? "checked" : "")
                                                    class="form-check-input"
-                                                   type="checkbox"
-                                                   role="switch"
-                                                   id="activoSwitch" />
-                                            <label class="form-check-label fw-semibold" for="activoSwitch">
+                                                   role="switch" />
+                                            <input type="hidden" name="Activo" value="false" />
+                                            <label class="form-check-label fw-semibold" for="Activo">
                                                 <i class="bi bi-toggle-on text-success"></i> Empresa Activa
                                             </label>
                                         </div>
