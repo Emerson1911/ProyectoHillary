@@ -21,7 +21,7 @@ namespace ProyectoHillary1.Endpoints
 
         // POST: api/Tarea
         // Roles permitidos: 1 (Gerente)
-        [AuthorizeRoles(1)]
+        [AuthorizeRoles(2)]
         [HttpPost]
         public async Task<ActionResult<int>> Create([FromBody] CreateTareaDTO createDto)
         {

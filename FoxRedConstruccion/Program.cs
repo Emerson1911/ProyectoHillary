@@ -7,6 +7,12 @@ var builder = WebApplication.CreateBuilder(args);
 var apiBaseUrl = builder.Configuration["ApiSettings:BaseUrl"];
 Console.WriteLine($"🔧 API Base URL configurada: {apiBaseUrl}");
 
+// ✅ Registrar IHttpContextAccessor (NECESARIO para el AuthTokenHandler)
+builder.Services.AddHttpContextAccessor();
+
+// ✅ Registrar el AuthTokenHandler
+builder.Services.AddTransient<AuthTokenHandler>();
+
 // Configurar HttpClient con políticas de reintentos y timeout
 builder.Services.AddHttpClient("HillaryApi", client =>
 {
@@ -14,6 +20,7 @@ builder.Services.AddHttpClient("HillaryApi", client =>
     client.DefaultRequestHeaders.Add("Accept", "application/json");
     client.Timeout = TimeSpan.FromSeconds(30);
 })
+.AddHttpMessageHandler<AuthTokenHandler>() // ✅ AGREGAR EL HANDLER AQUÍ
 .ConfigurePrimaryHttpMessageHandler(() => new HttpClientHandler
 {
     // Permitir certificados SSL auto-firmados en desarrollo
@@ -24,6 +31,7 @@ builder.Services.AddHttpClient("HillaryApi", client =>
 builder.Services.AddScoped<EmpresaService>();
 builder.Services.AddScoped<UsuarioService>();
 builder.Services.AddScoped<AuthService>();
+builder.Services.AddScoped<TareaService>();
 
 // ✅ Configurar autenticación con cookies
 builder.Services.AddAuthentication(CookieAuthenticationDefaults.AuthenticationScheme)
@@ -108,6 +116,7 @@ app.MapRazorPages();
 Console.WriteLine("✅ Aplicación iniciada correctamente");
 Console.WriteLine($"🌐 Frontend corriendo en los puertos configurados");
 Console.WriteLine($"🔐 Autenticación con cookies configurada");
+Console.WriteLine($"🔑 AuthTokenHandler registrado - Token se enviará automáticamente");
 Console.WriteLine($"🔒 Ruta por defecto: /Auth/Login");
 
 app.Run();
