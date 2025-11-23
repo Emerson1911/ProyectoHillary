@@ -34,9 +34,23 @@ builder.Services.AddAuthentication(CookieAuthenticationDefaults.AuthenticationSc
         options.AccessDeniedPath = "/Auth/Login";
         options.ExpireTimeSpan = TimeSpan.FromDays(7);
         options.SlidingExpiration = true;
+
+        // ✅ Configuración mejorada de cookies
         options.Cookie.HttpOnly = true;
         options.Cookie.SecurePolicy = CookieSecurePolicy.SameAsRequest;
+        options.Cookie.SameSite = SameSiteMode.Lax; // ⭐ AGREGAR
         options.Cookie.Name = "FoxRedAuth";
+        options.Cookie.IsEssential = true; // ⭐ AGREGAR
+
+        // ✅ Eventos para debugging
+        options.Events = new CookieAuthenticationEvents
+        {
+            OnSigningOut = async context =>
+            {
+                Console.WriteLine($"🗑️ Cookie eliminada: {context.HttpContext.User.Identity?.Name}");
+                await Task.CompletedTask;
+            }
+        };
     });
 
 // Agregar soporte para Razor Pages y MVC
@@ -69,7 +83,7 @@ app.UseAuthorization();
 // Configurar rutas para MVC
 app.MapControllerRoute(
     name: "default",
-    pattern: "{controller=Home}/{action=Index}/{id?}");
+    pattern: "{controller=Auth}/{action=Login}/{id?}");
 
 // Habilitar Razor Pages también
 app.MapRazorPages();
