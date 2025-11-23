@@ -154,7 +154,7 @@ namespace ProyectoHillary1.Endpoints
                 var usuario = new Usuario
                 {
                     EmpresaId = createDto.EmpresaId,
-                    RolId = createDto.RolId > 0 ? createDto.RolId : 2,
+                    RolId = createDto.RolId > 0 ? createDto.RolId : 1,
                     Nombre = createDto.Nombre,
                     Password = PasswordHelper.HashPassword(createDto.Password!),
                     Activo = true
