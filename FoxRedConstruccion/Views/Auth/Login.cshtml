@@ -103,12 +103,14 @@
                             </div>
 
                             <!-- Enlaces adicionales -->
+                            <!-- Enlaces adicionales -->
                             <div class="text-center">
                                 <small class="text-muted">
                                     ¿No tienes cuenta?
-                                    <a asp-controller="Empresa" asp-action="Create" class="text-decoration-none fw-bold">
+                                    <a href="@Url.Action("Create", "Empresa")" class="text-decoration-none fw-bold">
                                         Crear empresa
                                     </a>
+                                </small>
                                 </small>
                             </div>
                         </form>

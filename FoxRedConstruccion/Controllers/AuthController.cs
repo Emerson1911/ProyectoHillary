@@ -92,7 +92,7 @@ namespace FoxRedConstruccion.Controllers
                     return Redirect(returnUrl);
                 }
 
-                // Redirigir a la página de bienvenida (que detectará que está autenticado)
+                // ✅ Siempre redirigir al Index de Home después de autenticarse
                 return RedirectToAction("Index", "Home");
             }
 
@@ -105,7 +105,15 @@ namespace FoxRedConstruccion.Controllers
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> Logout()
         {
+            // ✅ Cerrar sesión y eliminar cookie
             await HttpContext.SignOutAsync(CookieAuthenticationDefaults.AuthenticationScheme);
+
+            // ✅ Forzar eliminación de la cookie manualmente (por si acaso)
+            Response.Cookies.Delete("FoxRedAuth");
+
+            // ✅ Limpiar cualquier dato temporal
+            TempData.Clear();
+
             TempData["Success"] = "Sesión cerrada exitosamente";
             return RedirectToAction(nameof(Login));
         }
