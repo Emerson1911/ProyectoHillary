@@ -1,6 +1,7 @@
 ﻿using Hillary.DTOs.UsuarioDTO;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using ProyectoHillary1.Attributes;
 using ProyectoHillary1.Controllers;
 using ProyectoHillary1.Helpers;
 using ProyectoHillary1.Models.Dal;
@@ -88,16 +89,29 @@ namespace ProyectoHillary1.Endpoints
             });
         }
 
-        // POST: api/Usuario - Solo admin puede crear usuarios
+        /// POST: api/Usuario - Crear usuario dentro de la empresa
+        // ✅ MODIFICADO: Gerente (1) y Admin (2) pueden crear usuarios
+        [AuthorizeRoles(1, 2)] // ✅ Permitir Gerente y Admin
         [HttpPost]
         public async Task<ActionResult> Create([FromBody] CreateUsuarioDTO createDto)
         {
             try
             {
-                // Solo admin puede crear usuarios
-                if (!IsAdmin())
+                int empresaId = GetEmpresaId();
+                int userRolId = GetRolId();
+
+                // ✅ Validar que el usuario esté creando para su propia empresa
+                if (createDto.EmpresaId != empresaId)
                 {
-                    return Forbid();
+                    return BadRequest(new { message = "Solo puedes crear usuarios para tu propia empresa" });
+                }
+
+                // ✅ REGLA DE NEGOCIO: No puedes crear usuarios con rol superior al tuyo
+                // Gerente (RolId: 1) puede crear cualquier rol
+                // Admin (RolId: 2) puede crear Admin (2) y roles inferiores (1002, etc.)
+                if (userRolId == 2 && createDto.RolId == 1)
+                {
+                    return BadRequest(new { message = "No tienes permisos para crear usuarios con rol Gerente" });
                 }
 
                 var usuario = new Usuario
@@ -106,13 +120,20 @@ namespace ProyectoHillary1.Endpoints
                     RolId = createDto.RolId,
                     Nombre = createDto.Nombre,
                     Password = PasswordHelper.HashPassword(createDto.Password),
+                    Activo = true
                 };
 
                 int result = await _usuarioDal.Create(usuario);
 
                 if (result > 0)
                 {
-                    return Ok(new { message = "Usuario creado exitosamente", id = usuario.Id });
+                    return Ok(new
+                    {
+                        message = "Usuario creado exitosamente",
+                        id = usuario.Id,
+                        email = usuario.Email,
+                        nombre = usuario.Nombre
+                    });
                 }
 
                 return BadRequest(new { message = "No se pudo crear el usuario" });
