@@ -23,7 +23,7 @@ builder.Services.AddHttpClient("HillaryApi", client =>
 // ✅ Registrar los servicios personalizados
 builder.Services.AddScoped<EmpresaService>();
 builder.Services.AddScoped<UsuarioService>();
-builder.Services.AddScoped<AuthService>(); // ⭐ AGREGAR ESTA LÍNEA
+builder.Services.AddScoped<AuthService>();
 
 // ✅ Configurar autenticación con cookies
 builder.Services.AddAuthentication(CookieAuthenticationDefaults.AuthenticationScheme)
@@ -38,9 +38,9 @@ builder.Services.AddAuthentication(CookieAuthenticationDefaults.AuthenticationSc
         // ✅ Configuración mejorada de cookies
         options.Cookie.HttpOnly = true;
         options.Cookie.SecurePolicy = CookieSecurePolicy.SameAsRequest;
-        options.Cookie.SameSite = SameSiteMode.Lax; // ⭐ AGREGAR
+        options.Cookie.SameSite = SameSiteMode.Lax;
         options.Cookie.Name = "FoxRedAuth";
-        options.Cookie.IsEssential = true; // ⭐ AGREGAR
+        options.Cookie.IsEssential = true;
 
         // ✅ Eventos para debugging
         options.Events = new CookieAuthenticationEvents
@@ -67,29 +67,47 @@ if (!app.Environment.IsDevelopment())
 }
 else
 {
-    app.UseDeveloperExceptionPage(); // Mejor debugging en desarrollo
+    app.UseDeveloperExceptionPage();
 }
-
-// Comentar temporalmente para evitar problemas de redirección
-// app.UseHttpsRedirection();
 
 app.UseStaticFiles();
 app.UseRouting();
 
-// ✅ IMPORTANTE: Agregar middleware de autenticación ANTES de autorización
-app.UseAuthentication(); // ⭐ AGREGAR ESTA LÍNEA
+// ✅ IMPORTANTE: Autenticación ANTES de autorización
+app.UseAuthentication();
 app.UseAuthorization();
 
-// Configurar rutas para MVC
+// ✅ FORZAR REDIRECCIÓN AL LOGIN si no está autenticado
+app.Use(async (context, next) =>
+{
+    var path = context.Request.Path.Value?.ToLower() ?? "";
+
+    // Rutas públicas permitidas sin autenticación
+    var rutasPublicas = new[] { "/auth/login", "/empresa/create", "/usuarios/register" };
+    var esRutaPublica = rutasPublicas.Any(ruta => path.StartsWith(ruta));
+    var esArchivoEstatico = path.Contains(".");
+
+    // Si no está autenticado y no es una ruta pública, redirigir al login
+    if (!context.User.Identity?.IsAuthenticated == true && !esRutaPublica && !esArchivoEstatico)
+    {
+        Console.WriteLine($"🚫 Acceso no autorizado a: {path} - Redirigiendo al login");
+        context.Response.Redirect("/Auth/Login");
+        return;
+    }
+
+    await next();
+});
+
+// ✅ Configurar ruta por defecto al Login
 app.MapControllerRoute(
     name: "default",
     pattern: "{controller=Auth}/{action=Login}/{id?}");
 
-// Habilitar Razor Pages también
 app.MapRazorPages();
 
 Console.WriteLine("✅ Aplicación iniciada correctamente");
 Console.WriteLine($"🌐 Frontend corriendo en los puertos configurados");
 Console.WriteLine($"🔐 Autenticación con cookies configurada");
+Console.WriteLine($"🔒 Ruta por defecto: /Auth/Login");
 
 app.Run();
