@@ -91,7 +91,7 @@ namespace ProyectoHillary1.Endpoints
 
         /// POST: api/Usuario - Crear usuario dentro de la empresa
         // ✅ MODIFICADO: Gerente (1) y Admin (2) pueden crear usuarios
-        [AuthorizeRoles(1, 2)] // ✅ Permitir Gerente y Admin
+        [AuthorizeRoles(1, 2)]
         [HttpPost]
         public async Task<ActionResult> Create([FromBody] CreateUsuarioDTO createDto)
         {
@@ -100,25 +100,32 @@ namespace ProyectoHillary1.Endpoints
                 int empresaId = GetEmpresaId();
                 int userRolId = GetRolId();
 
-                // ✅ Validar que el usuario esté creando para su propia empresa
-                if (createDto.EmpresaId != empresaId)
+                if (empresaId == 0)
+                {
+                    return BadRequest(new { message = "No se pudo obtener la empresa del usuario autenticado" });
+                }
+
+                if (createDto.EmpresaId != 0 && createDto.EmpresaId != empresaId)
                 {
                     return BadRequest(new { message = "Solo puedes crear usuarios para tu propia empresa" });
                 }
 
-                // ✅ REGLA DE NEGOCIO: No puedes crear usuarios con rol superior al tuyo
-                // Gerente (RolId: 1) puede crear cualquier rol
-                // Admin (RolId: 2) puede crear Admin (2) y roles inferiores (1002, etc.)
                 if (userRolId == 2 && createDto.RolId == 1)
                 {
                     return BadRequest(new { message = "No tienes permisos para crear usuarios con rol Gerente" });
                 }
 
+                if (createDto.RolId == 0)
+                {
+                    return BadRequest(new { message = "Debe especificar un rol válido" });
+                }
+
                 var usuario = new Usuario
                 {
-                    EmpresaId = createDto.EmpresaId,
+                    EmpresaId = empresaId,
                     RolId = createDto.RolId,
                     Nombre = createDto.Nombre,
+                    //Email = createDto.Email,
                     Password = PasswordHelper.HashPassword(createDto.Password),
                     Activo = true
                 };
@@ -132,7 +139,8 @@ namespace ProyectoHillary1.Endpoints
                         message = "Usuario creado exitosamente",
                         id = usuario.Id,
                         email = usuario.Email,
-                        nombre = usuario.Nombre
+                        nombre = usuario.Nombre,
+                        empresaId = usuario.EmpresaId
                     });
                 }
 
@@ -140,9 +148,12 @@ namespace ProyectoHillary1.Endpoints
             }
             catch (Exception ex)
             {
+                Console.WriteLine($"❌ Error al crear usuario: {ex.Message}");
+                Console.WriteLine($"📍 StackTrace: {ex.StackTrace}");
                 return StatusCode(500, new { message = "Error interno del servidor", error = ex.Message });
             }
         }
+
 
         // POST: api/Usuario/register - Registro público de usuarios
         [AllowAnonymous]
