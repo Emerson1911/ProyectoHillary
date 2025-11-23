@@ -124,7 +124,7 @@ namespace ProyectoHillary1.Endpoints
 
         // DELETE: api/Tarea/{id}
         // Roles permitidos: 1 (Gerente), 1002 (Vendedor) - Administrador NO puede eliminar
-        [AuthorizeRoles(1, 1002)]
+        [AuthorizeRoles(1,2, 1002)]
         [HttpDelete("{id}")]
         public async Task<ActionResult> Delete(int id)
         {

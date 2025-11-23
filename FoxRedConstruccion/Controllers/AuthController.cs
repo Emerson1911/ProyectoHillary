@@ -93,7 +93,7 @@ namespace FoxRedConstruccion.Controllers
                 }
 
                 // ✅ Siempre redirigir al Index de Home después de autenticarse
-                return RedirectToAction("Index", "Home");
+                return RedirectToAction("Index", "Tarea");
             }
 
             TempData["Error"] = "Email o contraseña incorrectos";
