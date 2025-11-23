@@ -1,10 +1,10 @@
 ﻿using FoxRedConstruccion.Services;
+using Microsoft.AspNetCore.Authentication.Cookies;
 
 var builder = WebApplication.CreateBuilder(args);
 
 // Leer la URL base de la API desde appsettings.json
 var apiBaseUrl = builder.Configuration["ApiSettings:BaseUrl"];
-
 Console.WriteLine($"🔧 API Base URL configurada: {apiBaseUrl}");
 
 // Configurar HttpClient con políticas de reintentos y timeout
@@ -20,9 +20,24 @@ builder.Services.AddHttpClient("HillaryApi", client =>
     ServerCertificateCustomValidationCallback = (message, cert, chain, errors) => true
 });
 
-// Registrar los servicios personalizados
+// ✅ Registrar los servicios personalizados
 builder.Services.AddScoped<EmpresaService>();
 builder.Services.AddScoped<UsuarioService>();
+builder.Services.AddScoped<AuthService>(); // ⭐ AGREGAR ESTA LÍNEA
+
+// ✅ Configurar autenticación con cookies
+builder.Services.AddAuthentication(CookieAuthenticationDefaults.AuthenticationScheme)
+    .AddCookie(options =>
+    {
+        options.LoginPath = "/Auth/Login";
+        options.LogoutPath = "/Auth/Logout";
+        options.AccessDeniedPath = "/Auth/Login";
+        options.ExpireTimeSpan = TimeSpan.FromDays(7);
+        options.SlidingExpiration = true;
+        options.Cookie.HttpOnly = true;
+        options.Cookie.SecurePolicy = CookieSecurePolicy.SameAsRequest;
+        options.Cookie.Name = "FoxRedAuth";
+    });
 
 // Agregar soporte para Razor Pages y MVC
 builder.Services.AddControllersWithViews();
@@ -36,12 +51,19 @@ if (!app.Environment.IsDevelopment())
     app.UseExceptionHandler("/Home/Error");
     app.UseHsts();
 }
+else
+{
+    app.UseDeveloperExceptionPage(); // Mejor debugging en desarrollo
+}
 
 // Comentar temporalmente para evitar problemas de redirección
 // app.UseHttpsRedirection();
 
 app.UseStaticFiles();
 app.UseRouting();
+
+// ✅ IMPORTANTE: Agregar middleware de autenticación ANTES de autorización
+app.UseAuthentication(); // ⭐ AGREGAR ESTA LÍNEA
 app.UseAuthorization();
 
 // Configurar rutas para MVC
@@ -54,5 +76,6 @@ app.MapRazorPages();
 
 Console.WriteLine("✅ Aplicación iniciada correctamente");
 Console.WriteLine($"🌐 Frontend corriendo en los puertos configurados");
+Console.WriteLine($"🔐 Autenticación con cookies configurada");
 
 app.Run();
