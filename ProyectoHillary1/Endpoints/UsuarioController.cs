@@ -11,7 +11,7 @@ using ProyectoHillary1.Services;
 namespace ProyectoHillary1.Endpoints
 {
     [Route("api/[controller]")]
-    //[Authorize] // ✅ AGREGAR aquí
+    // ❌ NO poner [Authorize] aquí - cada endpoint lo maneja individualmente
     public class UsuarioController : BaseApiController
     {
         private readonly UsuarioDal _usuarioDal;
@@ -74,6 +74,7 @@ namespace ProyectoHillary1.Endpoints
         }
 
         // GET: api/Usuario/me - Obtener info del usuario autenticado
+        [AuthorizeRoles(1, 2)] // ✅ Gerentes y Usuarios pueden ver su propia info
         [HttpGet("me")]
         public IActionResult GetCurrentUser()
         {
@@ -89,8 +90,9 @@ namespace ProyectoHillary1.Endpoints
             });
         }
 
-        /// POST: api/Usuario - Crear usuario dentro de la empresa
-        // ✅ MODIFICADO: Gerente (1) y Admin (2) pueden crear usuarios
+        // POST: api/Usuario - Crear usuario dentro de la empresa
+        // ✅ Gerente (1) y Usuario (2) pueden crear usuarios
+        // ✅ Usuario normal NO puede crear Gerentes (validación interna)
         [AuthorizeRoles(1, 2)]
         [HttpPost]
         public async Task<ActionResult> Create([FromBody] CreateUsuarioDTO createDto)
@@ -125,7 +127,6 @@ namespace ProyectoHillary1.Endpoints
                     EmpresaId = empresaId,
                     RolId = createDto.RolId,
                     Nombre = createDto.Nombre,
-                    //Email = createDto.Email,
                     Password = PasswordHelper.HashPassword(createDto.Password),
                     Activo = true
                 };
@@ -154,7 +155,6 @@ namespace ProyectoHillary1.Endpoints
             }
         }
 
-
         // POST: api/Usuario/register - Registro público de usuarios
         [AllowAnonymous]
         [HttpPost("register")]
@@ -175,11 +175,11 @@ namespace ProyectoHillary1.Endpoints
 
                 if (result > 0)
                 {
-                    return Ok(new  // ✅ Objeto anónimo
+                    return Ok(new
                     {
                         message = "Usuario registrado exitosamente",
                         id = usuario.Id,
-                        email = usuario.Email, // ✅ Email autogenerado
+                        email = usuario.Email,
                         nombre = usuario.Nombre
                     });
                 }
@@ -193,6 +193,8 @@ namespace ProyectoHillary1.Endpoints
         }
 
         // GET: api/Usuario/{id}
+        // ✅ Gerentes y Usuarios pueden ver usuarios de su empresa
+        [AuthorizeRoles(1, 2)]
         [HttpGet("{id}")]
         public async Task<ActionResult<GetlResultUsuarioDTO>> GetById(int id)
         {
@@ -205,15 +207,8 @@ namespace ProyectoHillary1.Endpoints
                     return NotFound(new { message = "Usuario no encontrado" });
                 }
 
-                // Solo admin o el mismo usuario puede ver la información
-                if (!IsAdmin() && GetUserId() != id)
-                {
-                    return Forbid();
-                }
-
-                // Admin puede ver usuarios de cualquier empresa
-                // Usuarios normales solo pueden ver usuarios de su empresa
-                if (!IsAdmin() && !BelongsToUserCompany(usuario.EmpresaId))
+                // ✅ CORRECCIÓN: TODOS (admin o no) solo pueden ver usuarios de su misma empresa
+                if (!BelongsToUserCompany(usuario.EmpresaId))
                 {
                     return Forbid();
                 }
@@ -239,6 +234,9 @@ namespace ProyectoHillary1.Endpoints
         }
 
         // PUT: api/Usuario/{id}
+        // ✅ Gerentes pueden editar cualquier usuario de su empresa
+        // ✅ Usuarios normales solo pueden editar su propio perfil (validación interna)
+        [AuthorizeRoles(1, 2)]
         [HttpPut("{id}")]
         public async Task<ActionResult> Edit(int id, [FromBody] EditUsuarioDTO editDto)
         {
@@ -251,14 +249,15 @@ namespace ProyectoHillary1.Endpoints
                     return NotFound(new { message = "Usuario no encontrado" });
                 }
 
-                // Solo admin o el mismo usuario puede editar
-                if (!IsAdmin() && GetUserId() != id)
+                // ✅ CORRECCIÓN: Solo puede editar usuarios de su misma empresa
+                if (!BelongsToUserCompany(usuarioExistente.EmpresaId))
                 {
                     return Forbid();
                 }
 
-                // Verificar que pertenece a la misma empresa (a menos que sea admin)
-                if (!IsAdmin() && !BelongsToUserCompany(usuarioExistente.EmpresaId))
+                // ✅ Gerentes pueden editar cualquier usuario de su empresa
+                // ✅ Usuarios normales solo pueden editar su propio perfil
+                if (!IsAdmin() && GetUserId() != id)
                 {
                     return Forbid();
                 }
@@ -288,13 +287,23 @@ namespace ProyectoHillary1.Endpoints
             }
         }
 
-        // DELETE: api/Usuario/{id} - Solo admin
+        // DELETE: api/Usuario/{id}
+        // ✅ SOLO Gerentes (RolId = 1) pueden eliminar usuarios
+        [AuthorizeRoles(1)]
         [HttpDelete("{id}")]
         public async Task<ActionResult> Delete(int id)
         {
             try
             {
-                if (!IsAdmin())
+                var usuarioExistente = await _usuarioDal.GetById(id);
+
+                if (usuarioExistente.Id == 0)
+                {
+                    return NotFound(new { message = "Usuario no encontrado" });
+                }
+
+                // ✅ Solo puede eliminar usuarios de su misma empresa
+                if (!BelongsToUserCompany(usuarioExistente.EmpresaId))
                 {
                     return Forbid();
                 }
@@ -315,26 +324,34 @@ namespace ProyectoHillary1.Endpoints
         }
 
         // POST: api/Usuario/search
+        // ✅ Gerentes y Usuarios pueden buscar usuarios de su empresa
+        [AuthorizeRoles(1, 2)]
         [HttpPost("search")]
         public async Task<ActionResult<SearchResultUsuarioDTO>> Search([FromBody] SearchQueryUsuarioDTO searchDto)
         {
             try
             {
+                Console.WriteLine($"🔍 Search recibido - Nombre: {searchDto.Nombre}, Email: {searchDto.Email}, RolId: {searchDto.RolId}, Activo: {searchDto.Activo}");
+                Console.WriteLine($"👤 Usuario logueado - UserId: {GetUserId()}, EmpresaId: {GetEmpresaId()}, RolId: {GetRolId()}, IsAdmin: {IsAdmin()}");
+
                 var usuario = new Usuario
                 {
                     Nombre = searchDto.Nombre,
-                    Email = searchDto.Email
+                    Email = searchDto.Email,
+                    RolId = searchDto.RolId ?? 0,
+                    Activo = searchDto.Activo
                 };
 
-                // Si no es admin, solo puede buscar usuarios de su empresa
-                if (!IsAdmin())
-                {
-                    usuario.EmpresaId = GetEmpresaId();
-                }
+                // ✅ CORRECCIÓN: SIEMPRE filtrar por la empresa del usuario logueado
+                // No importa si es admin o no, solo ve usuarios de su misma empresa
+                usuario.EmpresaId = GetEmpresaId();
+                Console.WriteLine($"🏢 Filtrando por EmpresaId: {usuario.EmpresaId}");
 
                 int skip = (searchDto.PageNumber - 1) * searchDto.PageSize;
                 int countRow = await _usuarioDal.CountSearch(usuario);
                 var usuarios = await _usuarioDal.Search(usuario, searchDto.PageSize, skip);
+
+                Console.WriteLine($"📊 Resultados encontrados: {countRow} usuarios de la empresa {usuario.EmpresaId}");
 
                 var result = new SearchResultUsuarioDTO
                 {
@@ -356,17 +373,29 @@ namespace ProyectoHillary1.Endpoints
             }
             catch (Exception ex)
             {
+                Console.WriteLine($"❌ Error en Search: {ex.Message}");
+                Console.WriteLine($"📍 StackTrace: {ex.StackTrace}");
                 return StatusCode(500, new { message = "Error interno del servidor", error = ex.Message });
             }
         }
 
-        // PATCH: api/Usuario/{id}/change-status - Solo admin
+        // PATCH: api/Usuario/{id}/change-status
+        // ✅ SOLO Gerentes (RolId = 1) pueden cambiar estados
+        [AuthorizeRoles(1)]
         [HttpPatch("{id}/change-status")]
         public async Task<ActionResult> ChangeStatus(int id, [FromBody] UserChangeStatusRequestDTO statusDto)
         {
             try
             {
-                if (!IsAdmin())
+                var usuarioExistente = await _usuarioDal.GetById(id);
+
+                if (usuarioExistente.Id == 0)
+                {
+                    return NotFound(new { message = "Usuario no encontrado" });
+                }
+
+                // ✅ Solo puede cambiar estado de usuarios de su misma empresa
+                if (!BelongsToUserCompany(usuarioExistente.EmpresaId))
                 {
                     return Forbid();
                 }

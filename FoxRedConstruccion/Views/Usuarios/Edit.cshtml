@@ -1,0 +1,167 @@
+﻿@model Hillary.DTOs.UsuarioDTO.EditUsuarioDTO
+
+@{
+    Layout = "~/Pages/Shared/_Layout.cshtml";
+    ViewData["Title"] = "Editar Usuario";
+}
+
+<div class="min-vh-100 bg-light py-5">
+    <div class="container">
+        <div class="row justify-content-center">
+            <div class="col-lg-8 col-md-10">
+                <div class="card shadow-sm border-0">
+                    <!-- Header -->
+                    <div class="card-header bg-gradient bg-warning text-white py-3 d-flex align-items-center">
+                        <i class="bi bi-pencil-square fs-4 me-2"></i>
+                        <h3 class="mb-0 fw-bold">Editar Usuario #@ViewBag.Id</h3>
+                    </div>
+
+                    <!-- Body -->
+                    <div class="card-body p-4">
+                        @if (TempData["Error"] != null)
+                        {
+                            <div class="alert alert-danger alert-dismissible fade show" role="alert">
+                                <i class="bi bi-exclamation-triangle-fill me-2"></i>
+                                <strong>@TempData["Error"]</strong>
+                                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                            </div>
+                        }
+
+                        <form asp-action="Edit" asp-route-id="@ViewBag.Id" method="post">
+                            @Html.AntiForgeryToken()
+
+                            <!-- Nombre -->
+                            <div class="mb-3">
+                                <label for="Nombre" class="form-label fw-semibold">
+                                    <i class="bi bi-person text-primary"></i> Nombre Completo *
+                                </label>
+                                <input type="text"
+                                       id="Nombre"
+                                       name="Nombre"
+                                       value="@Model.Nombre"
+                                       class="form-control form-control-lg"
+                                       placeholder="Ingrese el nombre completo"
+                                       required />
+                                <span asp-validation-for="Nombre" class="text-danger small"></span>
+                            </div>
+
+                            <!-- Email -->
+                            <div class="mb-3">
+                                <label for="Email" class="form-label fw-semibold">
+                                    <i class="bi bi-envelope text-info"></i> Email *
+                                </label>
+                                <input type="email"
+                                       id="Email"
+                                       name="Email"
+                                       value="@Model.Email"
+                                       class="form-control"
+                                       placeholder="ejemplo@correo.com"
+                                       required />
+                                <span asp-validation-for="Email" class="text-danger small"></span>
+                            </div>
+
+                            <!-- Contraseña (opcional) -->
+                            <div class="mb-3">
+                                <label for="Password" class="form-label fw-semibold">
+                                    <i class="bi bi-key text-danger"></i> Nueva Contraseña
+                                </label>
+                                <div class="input-group">
+                                    <input type="password"
+                                           id="Password"
+                                           name="Password"
+                                           class="form-control"
+                                           placeholder="Dejar en blanco para mantener la actual" />
+                                    <button class="btn btn-outline-secondary" type="button" id="togglePassword">
+                                        <i class="bi bi-eye" id="toggleIcon"></i>
+                                    </button>
+                                </div>
+                                <small class="text-muted">
+                                    <i class="bi bi-info-circle"></i> Solo ingrese una contraseña si desea cambiarla
+                                </small>
+                                <span asp-validation-for="Password" class="text-danger small d-block"></span>
+                            </div>
+
+                            <!-- Información adicional -->
+                            <div class="card bg-light mb-4">
+                                <div class="card-body">
+                                    <h6 class="fw-semibold mb-2">
+                                        <i class="bi bi-info-circle text-primary"></i> Información Importante
+                                    </h6>
+                                    <ul class="mb-0 small text-muted">
+                                        <li>Si no desea cambiar la contraseña, deje el campo vacío</li>
+                                        <li>Los cambios se aplicarán inmediatamente después de guardar</li>
+                                        <li>El email debe ser único en el sistema</li>
+                                    </ul>
+                                </div>
+                            </div>
+
+                            <!-- Botones de acción -->
+                            <div class="d-flex justify-content-between gap-2">
+                                <a href="@Url.Action("Index", "Usuarios")"
+                                   class="btn btn-outline-secondary btn-lg">
+                                    <i class="bi bi-x-circle"></i> Cancelar
+                                </a>
+                                <button type="submit" class="btn btn-warning btn-lg text-white">
+                                    <i class="bi bi-save"></i> Actualizar Usuario
+                                </button>
+                            </div>
+                        </form>
+                    </div>
+
+                    <!-- Footer -->
+                    <div class="card-footer text-center bg-white border-top-0 text-muted small">
+                        <i class="bi bi-info-circle"></i> Los campos marcados con (*) son obligatorios
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    @{
+        await Html.RenderPartialAsync("_ValidationScriptsPartial");
+    }
+
+    <style>
+        .card {
+            border-radius: 0.5rem;
+        }
+
+        .form-control:focus, .form-check-input:focus {
+            border-color: #ffc107;
+            box-shadow: 0 0 0 0.2rem rgba(255, 193, 7, 0.25);
+        }
+
+        .btn-lg {
+            min-width: 150px;
+        }
+    </style>
+
+    <script>
+        // Toggle password visibility
+        const togglePassword = document.getElementById('togglePassword');
+        const passwordInput = document.getElementById('Password');
+        const toggleIcon = document.getElementById('toggleIcon');
+
+        if (togglePassword) {
+            togglePassword.addEventListener('click', function() {
+                if (passwordInput.type === 'password') {
+                    passwordInput.type = 'text';
+                    toggleIcon.classList.remove('bi-eye');
+                    toggleIcon.classList.add('bi-eye-slash');
+                } else {
+                    passwordInput.type = 'password';
+                    toggleIcon.classList.remove('bi-eye-slash');
+                    toggleIcon.classList.add('bi-eye');
+                }
+            });
+        }
+
+        // Debug: Verificar que los datos se cargaron
+        console.log('Datos del modelo:', {
+            nombre: '@Model?.Nombre',
+            email: '@Model?.Email'
+        });
+    </script>
+}

@@ -1,0 +1,191 @@
+﻿@model Hillary.DTOs.UsuarioDTO.GetlResultUsuarioDTO
+
+@{
+    Layout = "~/Pages/Shared/_Layout.cshtml";
+    ViewData["Title"] = "Detalles de Usuario";
+}
+
+<div class="min-vh-100 bg-light py-5">
+    <div class="container">
+        <div class="row justify-content-center">
+            <div class="col-lg-8 col-md-10">
+                <div class="card shadow-sm border-0">
+
+                    <!-- Header -->
+                    <div class="card-header bg-gradient bg-primary text-white py-3 d-flex align-items-center">
+                        <i class="bi bi-person-circle fs-4 me-2"></i>
+                        <h3 class="mb-0 fw-bold">Detalles del Usuario</h3>
+                    </div>
+
+                    <!-- Body -->
+                    <div class="card-body p-4">
+
+                        <!-- Encabezado del Usuario -->
+                        <div class="d-flex flex-column flex-sm-row justify-content-between align-items-start align-items-sm-center mb-4">
+                            <div>
+                                <h4 class="fw-bold text-dark mb-1">@Model.Nombre</h4>
+                                <p class="text-muted mb-0">
+                                    <i class="bi bi-envelope"></i> <strong>@Model.Email</strong>
+                                </p>
+                            </div>
+                            <div class="mt-3 mt-sm-0">
+                                <span class="badge fs-6 @(Model.Activo == true ? "bg-success" : "bg-danger")">
+                                    <i class="bi bi-circle-fill"></i> @(Model.Activo == true ? "Activo" : "Inactivo")
+                                </span>
+                            </div>
+                        </div>
+
+                        <!-- Información principal -->
+                        <div class="row g-3">
+                            <div class="col-md-6">
+                                <div class="bg-light rounded p-3 h-100">
+                                    <h6 class="fw-semibold text-secondary mb-1">
+                                        <i class="bi bi-building"></i> Empresa
+                                    </h6>
+                                    <p class="mb-0">@(string.IsNullOrEmpty(Model.EmpresaNombre) ? "No asignada" : Model.EmpresaNombre)</p>
+                                    <small class="text-muted">ID: @Model.EmpresaId</small>
+                                </div>
+                            </div>
+
+                            <div class="col-md-6">
+                                <div class="bg-light rounded p-3 h-100">
+                                    <h6 class="fw-semibold text-secondary mb-1">
+                                        <i class="bi bi-shield-check"></i> Rol
+                                    </h6>
+                                    <span class="badge @(Model.RolId == 1 ? "bg-warning" : "bg-secondary") fs-6">
+                                        @(string.IsNullOrEmpty(Model.RolNombre) ? "Sin rol" : Model.RolNombre)
+                                    </span>
+                                    <br />
+                                    <small class="text-muted">ID: @Model.RolId</small>
+                                </div>
+                            </div>
+
+                            <div class="col-md-6">
+                                <div class="bg-light rounded p-3 h-100">
+                                    <h6 class="fw-semibold text-secondary mb-1">
+                                        <i class="bi bi-envelope-at"></i> Correo Electrónico
+                                    </h6>
+                                    <p class="mb-0 text-break">@Model.Email</p>
+                                </div>
+                            </div>
+
+                            <div class="col-md-6">
+                                <div class="bg-light rounded p-3 h-100">
+                                    <h6 class="fw-semibold text-secondary mb-1">
+                                        <i class="bi bi-hash"></i> ID de Usuario
+                                    </h6>
+                                    <p class="mb-0">@Model.Id</p>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Estado y Permisos -->
+                        <div class="row g-3 mt-3">
+                            <div class="col-12">
+                                <div class="card bg-primary bg-opacity-10">
+                                    <div class="card-body">
+                                        <h6 class="fw-semibold mb-3">
+                                            <i class="bi bi-info-circle text-primary"></i> Información del Sistema
+                                        </h6>
+                                        <div class="row">
+                                            <div class="col-md-6">
+                                                <small class="text-muted d-block mb-1">Estado de la cuenta</small>
+                                                <span class="badge @(Model.Activo == true ? "bg-success" : "bg-danger")">
+                                                    @(Model.Activo == true ? "Cuenta Activa" : "Cuenta Inactiva")
+                                                </span>
+                                            </div>
+                                            <div class="col-md-6">
+                                                <small class="text-muted d-block mb-1">Nivel de acceso</small>
+                                                <span class="badge @(Model.RolId == 1 ? "bg-warning" : "bg-secondary")">
+                                                    @(Model.RolId == 1 ? "Administrador" : "Usuario Estándar")
+                                                </span>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Resumen de Permisos -->
+                        @if (Model.RolId == 1)
+                        {
+                            <div class="alert alert-warning mt-4 d-flex align-items-start">
+                                <i class="bi bi-shield-fill-exclamation fs-4 me-2"></i>
+                                <div>
+                                    <strong>Usuario Gerente</strong><br />
+                                    <small>Este usuario tiene permisos de administración y puede gestionar otros usuarios dentro de su empresa.</small>
+                                </div>
+                            </div>
+                        }
+                        else
+                        {
+                            <div class="alert alert-info mt-4 d-flex align-items-start">
+                                <i class="bi bi-person-badge fs-4 me-2"></i>
+                                <div>
+                                    <strong>Usuario Estándar</strong><br />
+                                    <small>Este usuario tiene permisos básicos para realizar tareas asignadas.</small>
+                                </div>
+                            </div>
+                        }
+
+                        <!-- Acciones -->
+                        <div class="d-flex justify-content-center gap-3 mt-5">
+                            <a href="@Url.Action("Edit", "Usuarios", new { id = Model.Id })"
+                               class="btn btn-warning btn-lg shadow-sm text-white">
+                                <i class="bi bi-pencil"></i> Editar
+                            </a>
+                            <a href="@Url.Action("Delete", "Usuarios", new { id = Model.Id })"
+                               class="btn btn-danger btn-lg shadow-sm">
+                                <i class="bi bi-trash"></i> Eliminar
+                            </a>
+                            <a href="@Url.Action("Index", "Usuarios")"
+                               class="btn btn-outline-secondary btn-lg shadow-sm">
+                                <i class="bi bi-arrow-left"></i> Volver
+                            </a>
+                        </div>
+
+                    </div>
+
+                    <!-- Footer -->
+                    <div class="card-footer text-center bg-white border-top-0 text-muted small">
+                        <i class="bi bi-info-circle"></i> Información detallada del usuario registrado en el sistema.
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <style>
+        .card {
+            border-radius: 0.5rem;
+        }
+
+        .bg-light {
+            background-color: #f8f9fa !important;
+        }
+
+        .fw-semibold {
+            font-weight: 600;
+        }
+
+        .btn-lg {
+            min-width: 180px;
+        }
+
+        .fs-4 {
+            font-size: 1.4rem;
+        }
+
+        /* Hover effects */
+        .btn:hover {
+            transform: translateY(-2px);
+            transition: all 0.3s ease;
+        }
+
+        .text-break {
+            word-break: break-word;
+        }
+    </style>
+}

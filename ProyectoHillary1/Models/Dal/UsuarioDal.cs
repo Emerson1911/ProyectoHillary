@@ -83,6 +83,9 @@ namespace ProyectoHillary1.Models.Dal
                 query = query.Where(r => r.Nombre.Contains(usuario.Nombre));
             if (!string.IsNullOrWhiteSpace(usuario.Email))
                 query = query.Where(r => r.Email.Contains(usuario.Email));
+            // Filtrar por EmpresaId cuando venga especificado (> 0)
+            if (usuario.EmpresaId > 0)
+                query = query.Where(r => r.EmpresaId == usuario.EmpresaId);
             return query;
         }
 
