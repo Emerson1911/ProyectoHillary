@@ -25,15 +25,6 @@
                             </div>
                         }
 
-                        @if (TempData["Success"] != null)
-                        {
-                            <div class="alert alert-success alert-dismissible fade show shadow-sm" role="alert">
-                                <i class="bi bi-check-circle-fill me-2"></i>
-                                @TempData["Success"]
-                                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
-                            </div>
-                        }
-
                         <form asp-action="Create" method="post">
                             @Html.AntiForgeryToken()
 
@@ -48,15 +39,21 @@
                                     <span asp-validation-for="Nombre" class="text-danger small"></span>
                                 </div>
 
-                                <!-- Rol -->
+                                <!-- Rol - ✅ ACTUALIZADO -->
+                                <!-- Rol - ✅ SOLUCIÓN MÁS SENCILLA -->
                                 <div class="col-md-6">
                                     <label for="RolId" class="form-label fw-semibold">
                                         <i class="bi bi-shield-check text-warning"></i> Rol <span class="text-danger">*</span>
                                     </label>
                                     <select id="RolId" name="RolId" class="form-select" required>
-                                        <option value="">Seleccione un rol</option>
-                                        <option value="1" @(Model?.RolId == 1 ? "selected" : "")>Gerente</option>
-                                        <option value="2" @(Model?.RolId == 2 ? "selected" : "")>Usuario</option>
+                                        <option value="">-- Seleccione un rol --</option>
+                                        @if (ViewBag.RolesList != null)
+                                        {
+                                            @foreach (var rol in (List<Hillary.DTOs.RolDTOS.SearchResultRolsDTO.RolsDTO>)ViewBag.RolesList)
+                                            {
+                                                <option value="@rol.Id">@rol.Nombre</option>
+                                            }
+                                        }
                                     </select>
                                     <small class="text-muted">
                                         <i class="bi bi-info-circle"></i> El rol determina los permisos del usuario
@@ -156,5 +153,8 @@
                 toggleIcon.classList.add('bi-eye');
             }
         });
+
+        // ✅ DEBUG: Verificar que los roles se cargaron
+        console.log('Roles disponibles:', document.querySelectorAll('#RolId option').length);
     </script>
 }

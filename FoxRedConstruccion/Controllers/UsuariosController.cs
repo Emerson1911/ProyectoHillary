@@ -1,6 +1,8 @@
 ﻿using FoxRedConstruccion.Services;
+using Hillary.DTOs.RolDTOS;
 using Hillary.DTOs.UsuarioDTO;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Mvc.Rendering;
 
 namespace FoxRedConstruccion.Controllers
 {
@@ -8,11 +10,13 @@ namespace FoxRedConstruccion.Controllers
     {
         private readonly UsuarioService _usuarioService;
         private readonly EmpresaService _empresaService;
+        private readonly RolService _rolService;
 
-        public UsuariosController(UsuarioService usuarioService, EmpresaService empresaService)
+        public UsuariosController(UsuarioService usuarioService, EmpresaService empresaService, RolService rolService)
         {
             _usuarioService = usuarioService;
             _empresaService = empresaService;
+            _rolService = rolService;
         }
 
         // GET: Usuarios/Index - Lista de usuarios con búsqueda
@@ -56,13 +60,43 @@ namespace FoxRedConstruccion.Controllers
             }
         }
 
-        // GET: Usuarios/Create - Mostrar formulario de creación (interno)
-        public IActionResult Create()
+        // GET: Usuarios/Create
+        public async Task<IActionResult> Create()
         {
+            try
+            {
+                Console.WriteLine("🔄 Iniciando Create...");
+
+                var roles = await _rolService.GetAllAsync();
+
+                if (roles != null && roles.Any())
+                {
+                    // ✅ Crear lista simple para la vista
+                    ViewBag.RolesList = roles;
+                    Console.WriteLine($"✅ {roles.Count} roles cargados");
+
+                    foreach (var rol in roles)
+                    {
+                        Console.WriteLine($"   - ID: {rol.Id}, Nombre: {rol.Nombre}");
+                    }
+                }
+                else
+                {
+                    Console.WriteLine("⚠️ No se encontraron roles");
+                    ViewBag.RolesList = new List<SearchResultRolsDTO.RolsDTO>();
+                }
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"❌ Error: {ex.Message}");
+                ViewBag.RolesList = new List<SearchResultRolsDTO.RolsDTO>();
+            }
+
             var model = new CreateUsuarioDTO
             {
-                RolId = 2 // Valor por defecto: Usuario estándar
+                RolId = 2
             };
+
             return View(model);
         }
 
@@ -337,6 +371,38 @@ namespace FoxRedConstruccion.Controllers
             {
                 Console.WriteLine($"❌ Error en ChangeStatus: {ex.Message}");
                 return Json(new { success = false, message = "Error al cambiar el estado" });
+            }
+        }
+        // ✅ MÉTODO HELPER en UsuariosController.cs
+        private async Task CargarRolesEnViewBag()
+        {
+            try
+            {
+                Console.WriteLine("🔄 Cargando roles...");
+
+                var roles = await _rolService.GetAllAsync();
+
+                if (roles != null && roles.Any())
+                {
+                    ViewBag.Roles = new SelectList(roles, "Id", "Nombre");
+                    Console.WriteLine($"✅ {roles.Count} roles cargados:");
+
+                    foreach (var rol in roles)
+                    {
+                        Console.WriteLine($"   - ID: {rol.Id}, Nombre: {rol.Nombre}");
+                    }
+                }
+                else
+                {
+                    Console.WriteLine("⚠️ No se encontraron roles");
+                    ViewBag.Roles = new SelectList(Enumerable.Empty<SelectListItem>());
+                }
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"❌ Error al cargar roles: {ex.Message}");
+                Console.WriteLine($"📍 StackTrace: {ex.StackTrace}");
+                ViewBag.Roles = new SelectList(Enumerable.Empty<SelectListItem>());
             }
         }
     }

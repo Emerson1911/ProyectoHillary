@@ -32,6 +32,7 @@ builder.Services.AddScoped<EmpresaService>();
 builder.Services.AddScoped<UsuarioService>();
 builder.Services.AddScoped<AuthService>();
 builder.Services.AddScoped<TareaService>();
+builder.Services.AddScoped<RolService>();
 
 // ✅ Configurar autenticación con cookies
 builder.Services.AddAuthentication(CookieAuthenticationDefaults.AuthenticationScheme)
